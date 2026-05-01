@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>1分けいさん | Pinda Lab</title>
+<meta name="description" content="1分間で何問解けるかな?子ども向けの計算れんしゅう。たし算・ひき算・かけ算に対応。">
+<meta property="og:title" content="1分けいさん">
+<meta property="og:description" content="1分間で何問解けるかな?子ども向けの計算れんしゅう。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pndshch.github.io/1pun-keisan/">
+<meta name="twitter:card" content="summary">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-soft: #8b949e;
+    --text-mute: #6d7680;
+    --accent: #7c3aed;
+    --accent-2: #a855f7;
+    --good: #2ea043;
+    --good-deep: #238636;
+    --warn: #f59e0b;
+    --bad: #f87171;
+    --pink: #ec4899;
+}
+html, body {
+    height: 100%;
+    overscroll-behavior: contain;
+}
+body {
+    background: radial-gradient(ellipse at top, #1e0d3a 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100%;
+    padding: 24px 16px 32px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ── Top bar ── */
+.topbar {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    color: var(--text-mute);
+    font-size: 12px;
+}
+.topbar a {
+    color: var(--text-mute);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.topbar a:hover { color: var(--text); }
+
+/* ── Header ── */
+.brand {
+    text-align: center;
+    margin-bottom: 18px;
+}
+.brand-title {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent-2), #f0abfc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.brand-sub {
+    color: var(--text-soft);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+/* ── Pinda mascot ── */
+.pinda {
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    margin: 16px 0 8px;
+    transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+.pinda.bounce { animation: bounce 0.5s; }
+.pinda.shake { animation: shake 0.4s; }
+@keyframes bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-12px) scale(1.08); }
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px) rotate(-4deg); }
+    75% { transform: translateX(6px) rotate(4deg); }
+}
+
+/* ── Card ── */
+.card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ── Title screen ── */
+.screen { display: none; flex-direction: column; align-items: center; }
+.screen.active { display: flex; }
+
+.start-msg {
+    color: var(--text-soft);
+    font-size: 14px;
+    margin-bottom: 18px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 18px;
+}
+.diff-btn {
+    background: #21262d;
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 700;
+    font-family: inherit;
+    padding: 18px 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.diff-btn:hover, .diff-btn:focus { border-color: var(--accent-2); }
+.diff-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: var(--accent-2);
+    color: #fff;
+    transform: scale(1.02);
+}
+.diff-emoji { font-size: 24px; margin-bottom: 4px; display: block; }
+
+.start-btn {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--good), var(--good-deep));
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+}
+.start-btn:active { transform: scale(0.98); }
+.start-btn:hover { filter: brightness(1.1); }
+
+.best-badge {
+    margin-top: 12px;
+    color: var(--text-mute);
+    font-size: 13px;
+}
+.best-badge strong { color: var(--warn); font-weight: 700; }
+
+/* ── Game screen ── */
+.timer-bar {
+    width: 100%;
+    height: 6px;
+    background: #21262d;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--good), var(--warn));
+    transition: width 1s linear;
+    width: 100%;
+}
+
+.game-stats {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-soft);
+}
+.game-stats .num {
+    color: var(--text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 16px;
+}
+
+.problem {
+    font-size: 56px;
+    font-weight: 800;
+    text-align: center;
+    margin: 18px 0 8px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+}
+.answer-box {
+    width: 100%;
+    min-height: 64px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: #0d1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 16px;
+    transition: border-color 0.15s, background 0.15s;
+}
+.answer-box.correct { border-color: var(--good); background: rgba(46,160,67,0.15); }
+.answer-box.wrong { border-color: var(--bad); background: rgba(248,113,113,0.15); }
+.answer-box .ph { color: var(--text-mute); font-size: 18px; font-weight: 400; }
+
+.numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+.np-btn {
+    aspect-ratio: 1.6 / 1;
+    background: #21262d;
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 700;
+    font-family: inherit;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.08s, transform 0.08s;
+}
+.np-btn:hover { background: #30363d; }
+.np-btn:active { transform: scale(0.94); background: var(--accent); }
+.np-btn.np-del { background: #2a1a1a; color: var(--bad); }
+.np-btn.np-enter { background: linear-gradient(135deg, var(--good), var(--good-deep)); color: #fff; border-color: var(--good); }
+.np-btn.np-enter:active { background: var(--good-deep); }
+
+/* ── Result screen ── */
+.result-score {
+    font-size: 80px;
+    font-weight: 900;
+    margin: 8px 0;
+    background: linear-gradient(135deg, var(--accent-2), #f0abfc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-variant-numeric: tabular-nums;
+}
+.result-label {
+    color: var(--text-soft);
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.result-stat {
+    color: var(--text-soft);
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+.result-stat strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.result-best {
+    margin: 14px 0 18px;
+    padding: 10px 16px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px;
+    color: var(--warn);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+.btn {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    color: #fff;
+    transition: filter 0.15s, transform 0.1s;
+    display: block;
+}
+.btn:active { transform: scale(0.98); }
+.btn:hover { filter: brightness(1.1); }
+.btn-share { background: #1d9bf0; }
+.btn-again { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.btn-back  { background: #30363d; }
+
+/* ── Footer ── */
+.footer {
+    margin-top: 16px;
+    color: var(--text-mute);
+    font-size: 11px;
+    text-align: center;
+}
+.footer a { color: var(--text-mute); text-decoration: none; }
+.footer a:hover { color: var(--text); }
+
+/* ── Responsive ── */
+@media (max-height: 700px) {
+    .pinda { width: 64px; height: 64px; font-size: 50px; margin: 8px 0; }
+    .problem { font-size: 44px; margin: 10px 0 6px; }
+    .answer-box { min-height: 52px; font-size: 30px; margin-bottom: 10px; }
+    .np-btn { aspect-ratio: 2 / 1; font-size: 22px; }
+    .result-score { font-size: 60px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="https://pndshch.github.io/" aria-label="Pinda Labへ">← Pinda Lab</a>
+    <span>1分けいさん</span>
+</div>
+
+<div class="brand">
+    <div class="brand-title">1分けいさん</div>
+    <div class="brand-sub">ぴんだと いっしょに けいさんれんしゅう</div>
+</div>
+
+<div class="pinda" id="pinda">🐼</div>
+
+<div class="card">
+    <!-- Title screen -->
+    <div class="screen active" id="screen-title">
+        <p class="start-msg">1分間で なんもん とけるかな?<br>むずかしさを えらんで スタート!</p>
+        <div class="diff-grid">
+            <button class="diff-btn active" data-diff="add">
+                <span class="diff-emoji">➕</span>たし算
+            </button>
+            <button class="diff-btn" data-diff="sub">
+                <span class="diff-emoji">➖</span>ひき算
+            </button>
+            <button class="diff-btn" data-diff="mul">
+                <span class="diff-emoji">✖️</span>かけ算
+            </button>
+            <button class="diff-btn" data-diff="all">
+                <span class="diff-emoji">🌟</span>ぜんぶ
+            </button>
+        </div>
+        <button class="start-btn" id="btn-start">▶ スタート!</button>
+        <div class="best-badge" id="best-badge">ベストスコア: <strong>0</strong></div>
+    </div>
+
+    <!-- Game screen -->
+    <div class="screen" id="screen-game">
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+        <div class="game-stats">
+            <div>のこり: <span class="num" id="time-left">60</span> びょう</div>
+            <div>スコア: <span class="num" id="score">0</span></div>
+        </div>
+        <div class="problem" id="problem">3 + 4</div>
+        <div class="answer-box" id="answer-box"><span class="ph">こたえを にゅうりょく</span></div>
+        <div class="numpad">
+            <button class="np-btn" data-key="1">1</button>
+            <button class="np-btn" data-key="2">2</button>
+            <button class="np-btn" data-key="3">3</button>
+            <button class="np-btn" data-key="4">4</button>
+            <button class="np-btn" data-key="5">5</button>
+            <button class="np-btn" data-key="6">6</button>
+            <button class="np-btn" data-key="7">7</button>
+            <button class="np-btn" data-key="8">8</button>
+            <button class="np-btn" data-key="9">9</button>
+            <button class="np-btn np-del" data-key="del">⌫</button>
+            <button class="np-btn" data-key="0">0</button>
+            <button class="np-btn np-enter" data-key="enter">✓</button>
+        </div>
+    </div>
+
+    <!-- Result screen -->
+    <div class="screen" id="screen-result">
+        <div class="result-label">あなたの けっか</div>
+        <div class="result-score" id="result-score">0</div>
+        <div class="result-stat">もんだい <strong id="result-total">0</strong> もん いどう / せいかい <strong id="result-correct">0</strong> もん</div>
+        <div class="result-stat">せいかいりつ <strong id="result-rate">0</strong>%</div>
+        <div class="result-best" id="result-best-line">🏆 ベストスコア こうしん!</div>
+        <div class="result-actions">
+            <button class="btn btn-share" id="btn-share">𝕏 にスコアをシェア</button>
+            <button class="btn btn-again" id="btn-again">もういちど あそぶ</button>
+            <a class="btn btn-back" href="https://pndshch.github.io/">Pinda Lab に もどる</a>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <p><a href="https://pndshch.github.io/">© Pinda Lab</a> · <a href="https://www.buymeacoffee.com/pndshch" target="_blank" rel="noopener">☕ Buy me a coffee</a></p>
+</div>
+
+<script>
+'use strict';
+
+const STORAGE_BEST = 'pl-1pun-best';
+const STORAGE_DIFF = 'pl-1pun-diff';
+const DURATION = 60;
+
+const els = {
+    screens: {
+        title:  document.getElementById('screen-title'),
+        game:   document.getElementById('screen-game'),
+        result: document.getElementById('screen-result'),
+    },
+    pinda: document.getElementById('pinda'),
+    btnStart: document.getElementById('btn-start'),
+    btnAgain: document.getElementById('btn-again'),
+    btnShare: document.getElementById('btn-share'),
+    bestBadge: document.getElementById('best-badge'),
+    timerFill: document.getElementById('timer-fill'),
+    timeLeft: document.getElementById('time-left'),
+    score: document.getElementById('score'),
+    problem: document.getElementById('problem'),
+    answerBox: document.getElementById('answer-box'),
+    resultScore: document.getElementById('result-score'),
+    resultTotal: document.getElementById('result-total'),
+    resultCorrect: document.getElementById('result-correct'),
+    resultRate: document.getElementById('result-rate'),
+    resultBestLine: document.getElementById('result-best-line'),
+    diffBtns: Array.from(document.querySelectorAll('.diff-btn')),
+    npBtns: Array.from(document.querySelectorAll('.np-btn')),
+};
+
+const state = {
+    diff: 'add',
+    answer: '',
+    correctAnswer: 0,
+    score: 0,
+    correct: 0,
+    total: 0,
+    timer: null,
+    timeLeft: DURATION,
+    running: false,
+};
+
+// ── helpers ────────────────────────────────────────────
+function show(name) {
+    Object.keys(els.screens).forEach(k => {
+        els.screens[k].classList.toggle('active', k === name);
+    });
+}
+
+function readBest(diff) {
+    try {
+        const raw = localStorage.getItem(STORAGE_BEST + '-' + diff);
+        return raw ? parseInt(raw, 10) || 0 : 0;
+    } catch (_) { return 0; }
+}
+function writeBest(diff, val) {
+    try { localStorage.setItem(STORAGE_BEST + '-' + diff, String(val)); } catch (_) {}
+}
+function rememberDiff(diff) {
+    try { localStorage.setItem(STORAGE_DIFF, diff); } catch (_) {}
+}
+function recallDiff() {
+    try { return localStorage.getItem(STORAGE_DIFF) || 'add'; } catch (_) { return 'add'; }
+}
+
+function rand(n) { return Math.floor(Math.random() * n); }
+
+// ── problem generation ───────────────────────────────
+function makeProblem() {
+    let kind = state.diff;
+    if (kind === 'all') kind = ['add','sub','mul'][rand(3)];
+
+    let a, b, op, ans;
+    if (kind === 'add') {
+        a = 1 + rand(9); b = 1 + rand(9); op = '+'; ans = a + b;
+    } else if (kind === 'sub') {
+        a = 2 + rand(8); b = 1 + rand(a); op = '−'; ans = a - b;
+    } else { // mul
+        a = 1 + rand(9); b = 1 + rand(9); op = '×'; ans = a * b;
+    }
+    state.correctAnswer = ans;
+    els.problem.textContent = `${a} ${op} ${b}`;
+}
+
+// ── game flow ────────────────────────────────────────
+function selectDiff(diff) {
+    state.diff = diff;
+    rememberDiff(diff);
+    els.diffBtns.forEach(b => b.classList.toggle('active', b.dataset.diff === diff));
+    refreshBestBadge();
+}
+function refreshBestBadge() {
+    els.bestBadge.querySelector('strong').textContent = readBest(state.diff);
+}
+
+function startGame() {
+    state.score = 0;
+    state.correct = 0;
+    state.total = 0;
+    state.timeLeft = DURATION;
+    state.answer = '';
+    state.running = true;
+
+    els.score.textContent = '0';
+    els.timeLeft.textContent = DURATION;
+    els.timerFill.style.transition = 'none';
+    els.timerFill.style.width = '100%';
+    // force reflow then enable transition
+    void els.timerFill.offsetWidth;
+    els.timerFill.style.transition = `width ${DURATION}s linear`;
+    requestAnimationFrame(() => { els.timerFill.style.width = '0%'; });
+
+    show('game');
+    els.pinda.textContent = '🤓';
+    makeProblem();
+    renderAnswer();
+
+    state.timer = setInterval(tick, 1000);
+}
+
+function tick() {
+    state.timeLeft -= 1;
+    els.timeLeft.textContent = state.timeLeft;
+    if (state.timeLeft <= 0) finishGame();
+}
+
+function renderAnswer() {
+    if (state.answer === '') {
+        els.answerBox.innerHTML = '<span class="ph">こたえを にゅうりょく</span>';
+    } else {
+        els.answerBox.textContent = state.answer;
+    }
+    els.answerBox.classList.remove('correct', 'wrong');
+}
+
+function pressKey(key) {
+    if (!state.running) return;
+    if (key === 'del') {
+        state.answer = state.answer.slice(0, -1);
+        renderAnswer();
+        return;
+    }
+    if (key === 'enter') {
+        if (state.answer === '') return;
+        submitAnswer();
+        return;
+    }
+    if (state.answer.length >= 4) return; // max 4 digits
+    state.answer = (state.answer + key).replace(/^0+(?=\d)/, '');
+    renderAnswer();
+}
+
+function submitAnswer() {
+    state.total += 1;
+    const guess = parseInt(state.answer, 10);
+    const isCorrect = guess === state.correctAnswer;
+    if (isCorrect) {
+        state.correct += 1;
+        state.score += 1;
+        els.score.textContent = state.score;
+        els.answerBox.classList.add('correct');
+        els.pinda.textContent = '😊';
+        els.pinda.classList.remove('shake');
+        els.pinda.classList.add('bounce');
+    } else {
+        els.answerBox.classList.add('wrong');
+        els.pinda.textContent = '😢';
+        els.pinda.classList.remove('bounce');
+        els.pinda.classList.add('shake');
+    }
+    setTimeout(() => {
+        if (!state.running) return;
+        els.pinda.classList.remove('bounce', 'shake');
+        els.pinda.textContent = '🤓';
+        state.answer = '';
+        makeProblem();
+        renderAnswer();
+    }, 350);
+}
+
+function finishGame() {
+    state.running = false;
+    clearInterval(state.timer);
+    els.timerFill.style.width = '0%';
+
+    const best = readBest(state.diff);
+    const isNewBest = state.score > best;
+    if (isNewBest) writeBest(state.diff, state.score);
+
+    els.resultScore.textContent = state.score;
+    els.resultTotal.textContent = state.total;
+    els.resultCorrect.textContent = state.correct;
+    els.resultRate.textContent = state.total ? Math.round(state.correct / state.total * 100) : 0;
+    els.resultBestLine.style.display = isNewBest ? 'block' : 'none';
+    els.pinda.textContent = state.score >= 20 ? '🤩' : state.score >= 10 ? '😊' : '🐼';
+    show('result');
+}
+
+// ── share ────────────────────────────────────────────
+function diffLabel(d) {
+    return ({ add: 'たし算', sub: 'ひき算', mul: 'かけ算', all: 'ぜんぶ' })[d] || d;
+}
+function shareToX() {
+    const text =
+        `1分けいさん (${diffLabel(state.diff)}) で ${state.score}問 せいかい!\n` +
+        `せいかいりつ ${state.total ? Math.round(state.correct / state.total * 100) : 0}%\n` +
+        `あなたも ちょうせんしてみよう ▶`;
+    const url = 'https://pndshch.github.io/1pun-keisan/';
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(intent, '_blank', 'noopener');
+}
+
+// ── wiring ───────────────────────────────────────────
+els.diffBtns.forEach(b => b.addEventListener('click', () => selectDiff(b.dataset.diff)));
+els.btnStart.addEventListener('click', startGame);
+els.btnAgain.addEventListener('click', () => { show('title'); refreshBestBadge(); });
+els.btnShare.addEventListener('click', shareToX);
+els.npBtns.forEach(b => b.addEventListener('click', () => pressKey(b.dataset.key)));
+
+document.addEventListener('keydown', (e) => {
+    if (els.screens.game.classList.contains('active')) {
+        if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+        else if (e.key === 'Backspace') pressKey('del');
+        else if (e.key === 'Enter') pressKey('enter');
+    } else if (els.screens.title.classList.contains('active')) {
+        if (e.key === 'Enter' || e.key === ' ') startGame();
+    }
+});
+
+// ── init ─────────────────────────────────────────────
+selectDiff(recallDiff());
+</script>
+
+</body>
+</html>
